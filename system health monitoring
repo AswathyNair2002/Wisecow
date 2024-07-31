@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Thresholds
+CPU_THRESHOLD=80
+MEMORY_THRESHOLD=80
+DISK_THRESHOLD=80
+PROCESS_THRESHOLD=200
+
+# Log file
+LOG_FILE="system_health_alerts.log"
+
+# Function to log alerts
+log_alert() {
+    local message=$1
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - ${message}" | tee -a $LOG_FILE
+}
+
+# Check CPU usage
+check_cpu() {
+    cpu_usage=$(top -bn1 | grep "Cpu(s)" | sed "s/., *\([0-9.]\)%* id.*/\1/" | awk '{print 100 - $1}')
+    if (( ${cpu_usage%.*} > CPU_THRESHOLD )); then
+        log_alert "CPU usage is high: ${cpu_usage}%"
+    fi
+}
+
+# Check memory usage
+check_memory() {
+    memory_usage=$(free | grep Mem | awk '{print $3/$2 * 100.0}')
+    if (( ${memory_usage%.*} > MEMORY_THRESHOLD )); then
+        log_alert "Memory usage is high: ${memory_usage}%"
+    fi
+}
+
+# Check disk space usage
+check_disk() {
+    disk_usage=$(df / |
